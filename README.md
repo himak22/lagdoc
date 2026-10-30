@@ -5,9 +5,25 @@ Herramienta de terminal para averiguar **por qué** hay lag, tirones o bajadas d
 
 ## Instalación
 
+Solo necesita `python` (CachyOS y Arch lo traen casi siempre; si no: `sudo pacman -S python`).
+
+Un único archivo, desde la última release:
+
 ```sh
-ln -s "$PWD/lagdoc.sh" ~/.local/bin/lagdoc   # o ejecútalo como ./lagdoc.sh
+mkdir -p ~/.local/bin
+curl -L -o ~/.local/bin/lagdoc https://github.com/himak22/lagdoc/releases/latest/download/lagdoc
+chmod +x ~/.local/bin/lagdoc
 ```
+
+O clonando el repositorio:
+
+```sh
+git clone https://github.com/himak22/lagdoc.git
+ln -s "$PWD/lagdoc/lagdoc.sh" ~/.local/bin/lagdoc
+```
+
+Si la terminal no encuentra `lagdoc`, añade `~/.local/bin` al PATH (en fish, el shell por defecto
+de CachyOS: `fish_add_path ~/.local/bin`).
 
 ## Uso
 
@@ -30,7 +46,8 @@ te dice qué estaba pasando en el sistema en **cada tirón** y en cada bajada de
 
 ```ini
 output_folder=/home/TU_USUARIO/mangologs
-log_interval=0          # registra todos los fotogramas, no uno cada 100 ms
+# 0 = registra todos los fotogramas (por defecto, uno cada 100 ms)
+log_interval=0
 toggle_logging=Shift_L+F2
 ```
 
@@ -46,26 +63,13 @@ La hora se saca del nombre del archivo (precisión de ±1 s). Si no cuadra, ajus
 ## Si juegas en otra instalación (p. ej. Arch + CachyOS en el mismo PC)
 
 `check` y `monitor` tienen que ejecutarse **en la instalación donde juegas**: la configuración y el log
-del kernel son de cada sistema. `report` puede ejecutarse en cualquiera.
+del kernel son de cada sistema. Instálalo allí con el `curl` de arriba. `report` puede ejecutarse en
+cualquiera: para analizar desde Arch las sesiones de CachyOS (en btrfs), monta el disco en solo
+lectura y pasa la carpeta:
 
 ```sh
-./build.sh                     # crea dist/lagdoc: un único ejecutable (zipapp de Python)
-```
-
-Copia `dist/lagdoc` a `~/.local/bin/` de la otra instalación (necesita `python`). Desde Arch, con
-CachyOS en btrfs:
-
-```sh
-sudo mount -o subvolid=5 /dev/nvme0n1p2 /mnt      # raíz de btrfs: verás @, @home...
-cp dist/lagdoc /mnt/@home/TU_USUARIO/.local/bin/  # con sudo + chown si el UID no coincide
-sudo umount /mnt
-```
-
-Para analizar las sesiones de CachyOS desde Arch, móntalo en solo lectura y pasa la carpeta:
-
-```sh
-sudo mount -o ro,subvolid=5 /dev/nvme0n1p2 /mnt
-./lagdoc.sh report /mnt/@home/TU_USUARIO/.local/share/lagdoc/   # usa la última sesión
+sudo mount -o ro,subvolid=5 /dev/nvme0n1p2 /mnt                     # raíz de btrfs: @, @home...
+lagdoc report /mnt/@home/TU_USUARIO/.local/share/lagdoc/            # usa la última sesión
 ```
 
 En CachyOS, `check` revisa además el planificador sched-ext (`scxctl`), ananicy-cpp,
@@ -89,8 +93,9 @@ En CachyOS, `check` revisa además el planificador sched-ext (`scxctl`), ananicy
 - La detección automática del juego es heurística; con launchers raros usa `--game`.
 - El monitor muestrea cada segundo: ve tendencias y causas, no fotogramas individuales (para eso, MangoHud).
 
-## Pruebas
+## Desarrollo
 
 ```sh
-python3 -m unittest discover tests
+python3 -m unittest discover tests   # pruebas
+./build.sh                           # crea dist/lagdoc (zipapp de Python) para publicarlo como release
 ```
